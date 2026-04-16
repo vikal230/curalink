@@ -11,6 +11,8 @@ const PUBMED_LIMIT = 80;
 const FINAL_TRIAL_LIMIT = 5;
 const FINAL_PAPER_LIMIT = 6;
 const FINAL_CITATION_LIMIT = 8;
+const PUBMED_BATCH_SIZE = 20;
+const PUBMED_QUERY_LIMIT = 3;
 
 const CLINICAL_TRIAL_STATUSES = [
   "RECRUITING",
@@ -19,10 +21,17 @@ const CLINICAL_TRIAL_STATUSES = [
 ];
 
 const OPEN_ALEX_SORTS = ["relevance_score:desc", "publication_date:desc"];
+const PUBMED_TOOL = process.env.NCBI_TOOL || "curalink";
+const PUBMED_EMAIL = process.env.NCBI_EMAIL || "";
+const PUBMED_API_KEY = process.env.NCBI_API_KEY || "";
+const PUBMED_HEADERS = {
+  "User-Agent": "Curalink/1.0 (medical research assistant)",
+};
 
 const requestJson = (url, options = {}) => {
   return axios.get(url, {
     timeout: REQUEST_TIMEOUT,
+    headers: options.headers || PUBMED_HEADERS,
     ...options,
   });
 };
@@ -31,6 +40,7 @@ const requestText = (url) => {
   return axios.get(url, {
     timeout: REQUEST_TIMEOUT,
     responseType: "text",
+    headers: PUBMED_HEADERS,
   });
 };
 
@@ -50,11 +60,23 @@ const buildOpenAlexUrl = (query, page = 1, sort = "relevance_score:desc") => {
 
 const buildPubMedSearchUrl = (query) => {
   const encodedQuery = encodeURIComponent(query);
-  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodedQuery}&retmax=${PUBMED_LIMIT}&sort=pub+date&retmode=json`;
+  const toolPart = `&tool=${encodeURIComponent(PUBMED_TOOL)}`;
+  const emailPart = PUBMED_EMAIL ? `&email=${encodeURIComponent(PUBMED_EMAIL)}` : "";
+  const apiKeyPart = PUBMED_API_KEY
+    ? `&api_key=${encodeURIComponent(PUBMED_API_KEY)}`
+    : "";
+
+  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodedQuery}&retmax=${PUBMED_LIMIT}&sort=pub+date&retmode=json${toolPart}${emailPart}${apiKeyPart}`;
 };
 
 const buildPubMedFetchUrl = (ids) => {
-  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${ids.join(",")}&retmode=xml`;
+  const toolPart = `&tool=${encodeURIComponent(PUBMED_TOOL)}`;
+  const emailPart = PUBMED_EMAIL ? `&email=${encodeURIComponent(PUBMED_EMAIL)}` : "";
+  const apiKeyPart = PUBMED_API_KEY
+    ? `&api_key=${encodeURIComponent(PUBMED_API_KEY)}`
+    : "";
+
+  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${ids.join(",")}&retmode=xml${toolPart}${emailPart}${apiKeyPart}`;
 };
 
 const toCleanString = (value = "") => cleanText(String(value || "").trim());
@@ -355,7 +377,7 @@ const fetchOpenAlex = async (queries) => {
 };
 
 const fetchPubMed = async (queries) => {
-  const queryList = Array.isArray(queries) ? queries : [queries];
+  const queryList = (Array.isArray(queries) ? queries : [queries]).slice(0, PUBMED_QUERY_LIMIT);
   const allIds = [];
 
   for (const query of queryList) {
@@ -363,11 +385,15 @@ const fetchPubMed = async (queries) => {
       continue;
     }
 
-    const searchUrl = buildPubMedSearchUrl(query);
-    const searchResponse = await requestJson(searchUrl);
-    const ids = searchResponse.data?.esearchresult?.idlist || [];
+    try {
+      const searchUrl = buildPubMedSearchUrl(query);
+      const searchResponse = await requestJson(searchUrl);
+      const ids = searchResponse.data?.esearchresult?.idlist || [];
 
-    allIds.push(...ids);
+      allIds.push(...ids);
+    } catch (error) {
+      console.error(`[PubMed] search query failed: ${query}`, error?.message || error);
+    }
   }
 
   const ids = uniqueStrings(allIds).slice(0, PUBMED_LIMIT);
@@ -375,9 +401,22 @@ const fetchPubMed = async (queries) => {
     return [];
   }
 
-  const fetchUrl = buildPubMedFetchUrl(ids);
-  const fetchResponse = await requestText(fetchUrl);
-  const papers = parsePubMedArticles(fetchResponse.data || "", ids);
+  const papers = [];
+
+  for (let index = 0; index < ids.length; index += PUBMED_BATCH_SIZE) {
+    const batchIds = ids.slice(index, index + PUBMED_BATCH_SIZE);
+
+    try {
+      const fetchUrl = buildPubMedFetchUrl(batchIds);
+      const fetchResponse = await requestText(fetchUrl);
+      papers.push(...parsePubMedArticles(fetchResponse.data || "", batchIds));
+    } catch (error) {
+      console.error(
+        `[PubMed] fetch batch failed: ${batchIds.join(",")}`,
+        error?.message || error
+      );
+    }
+  }
 
   return dedupePapers(papers);
 };
