@@ -110,6 +110,7 @@ const searchRecordSchema = new mongoose.Schema(
     citations: { type: [citationSchema], default: [] },
     meta: { type: searchMetaSchema, default: () => ({}) },
     createdAt: { type: Date, default: Date.now },
+    archivedAt: { type: Date, default: null },
   },
   { timestamps: false }
 );
@@ -132,6 +133,10 @@ const sessionSchema = new mongoose.Schema(
       default: [],
     },
     searches: {
+      type: [searchRecordSchema],
+      default: [],
+    },
+    archivedSearches: {
       type: [searchRecordSchema],
       default: [],
     },

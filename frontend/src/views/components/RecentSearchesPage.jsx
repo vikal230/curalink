@@ -2,7 +2,7 @@ import { formatConversationTime } from "../../models/researchModel";
 import { ReportPanel } from "./ReportPanel";
 import { SourcesSidebar } from "./SourcesSidebar";
 
-const SearchChip = ({ isActive, onClick, search }) => {
+const SearchChip = ({ isActive, onArchive, onClick, search }) => {
   const diseaseLabel = search.context?.disease || "General search";
   const patientLabel = search.context?.patientName || "No patient name";
   const queryLabel = search.query || "Open saved report";
@@ -16,7 +16,21 @@ const SearchChip = ({ isActive, onClick, search }) => {
       onClick={onClick}
       className={`w-[360px] min-h-[180px] shrink-0 rounded-[1.7rem] border p-5 text-left transition ${chipClasses}`}
     >
-      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Disease</p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Disease</p>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onArchive(search);
+          }}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm text-slate-300 transition hover:border-rose-300/30 hover:text-rose-200"
+          aria-label="Delete saved report"
+          title="Delete saved report"
+        >
+          x
+        </button>
+      </div>
       <p className="mt-2 text-lg font-semibold text-white">{diseaseLabel}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">
         Patient
@@ -43,6 +57,7 @@ export const RecentSearchesPage = ({
   sectionLabelMap,
   selectedSearchId,
   sessionContext,
+  onArchiveSearch,
   onSelectSearch,
 }) => {
   if (!recentSearches.length) {
@@ -77,6 +92,7 @@ export const RecentSearchesPage = ({
               <SearchChip
                 key={search.id}
                 isActive={selectedSearchId === search.id}
+                onArchive={onArchiveSearch}
                 onClick={() => onSelectSearch(search)}
                 search={search}
               />

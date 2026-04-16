@@ -7,12 +7,14 @@ import {
   formatCount,
   hydrateResponseDataFromSearch,
   parseAnswer,
+  readStoredSessionIds,
   rememberSessionId,
   sanitizeContextForm,
   sectionLabelMap,
   sessionStorageKey,
 } from "../models/researchModel";
 import {
+  archiveSessionSearch,
   fetchSessionSearches,
   fetchSessionSnapshot,
   submitResearchQuery,
@@ -227,6 +229,35 @@ export const useResearchController = () => {
     }));
   };
 
+  const archiveSearch = async (search) => {
+    if (!search?.id || !search?.sessionId) {
+      return;
+    }
+
+    try {
+      const archiveData = await archiveSessionSearch(search.sessionId, search.id);
+
+      const searches = await loadAllSearches(readStoredSessionIds());
+      setRecentSearches(searches);
+
+      if (selectedSearchId === search.id) {
+        const nextSearch = searches[0];
+
+        if (nextSearch) {
+          await selectSearch(nextSearch);
+        } else {
+          setSelectedSearchId("");
+          setResponseData(null);
+          setLastQuery(INITIAL_LAST_QUERY);
+          setHistory(archiveData?.session?.messages || []);
+          setContextForm(sanitizeContextForm(archiveData?.session?.profile || {}));
+        }
+      }
+    } catch (archiveError) {
+      setError(archiveError?.message || "Failed to delete saved report.");
+    }
+  };
+
   const resetSession = () => {
     if (sessionId) {
       rememberSessionId(sessionId);
@@ -265,6 +296,7 @@ export const useResearchController = () => {
     responseData,
     sectionLabelMap,
     selectedSearchId,
+    archiveSearch,
     selectSearch,
     sessionId,
     setQuery,

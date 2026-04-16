@@ -1,6 +1,7 @@
 import { fetchResearchData } from "../services/researchService.js";
 import { generateMedicalResponse } from "../services/ollamaService.js";
 import {
+  archiveSearchRecord,
   getOrCreateSession,
   getSessionSearches,
   getSessionSnapshot,
@@ -160,5 +161,30 @@ export const handleSessionSearchesRequest = async (req, res) => {
   } catch (error) {
     console.error("[Search History Error]:", error);
     return res.status(500).json({ success: false, error: "Failed to load search history" });
+  }
+};
+
+export const handleArchiveSearchRequest = async (req, res) => {
+  const sessionId = resolveSessionId(req.params?.sessionId);
+  const searchId = resolveSessionId(req.params?.searchId);
+
+  if (!sessionId || !searchId) {
+    return res.status(400).json({
+      success: false,
+      error: "Session ID and search ID are required",
+    });
+  }
+
+  try {
+    const result = await archiveSearchRecord(sessionId, searchId);
+
+    return res.status(200).json({
+      success: true,
+      archived: result.archived,
+      session: result.snapshot,
+    });
+  } catch (error) {
+    console.error("[Archive Search Error]:", error);
+    return res.status(500).json({ success: false, error: "Failed to archive search" });
   }
 };

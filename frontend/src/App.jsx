@@ -70,6 +70,7 @@ const App = () => {
             citations={controller.citations}
             history={controller.history}
             lastQuery={controller.lastQuery}
+            onArchiveSearch={controller.archiveSearch}
             parsedAnswer={controller.parsedAnswer}
             recentSearches={controller.recentSearches}
             responseData={controller.responseData}

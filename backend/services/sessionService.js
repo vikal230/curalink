@@ -27,6 +27,7 @@ const formatSearch = (search = {}) => ({
   citations: search.citations || [],
   meta: search.meta || {},
   createdAt: search.createdAt,
+  archivedAt: search.archivedAt || null,
 });
 
 const createSession = async (sessionId, profile) => {
@@ -35,6 +36,7 @@ const createSession = async (sessionId, profile) => {
     profile,
     messages: [],
     searches: [],
+    archivedSearches: [],
   });
 };
 
@@ -155,4 +157,36 @@ export const getSessionSearches = async (sessionId) => {
     .slice()
     .reverse()
     .map(formatSearch);
+};
+
+export const archiveSearchRecord = async (sessionId, searchId) => {
+  const session = await Session.findOne({ sessionId });
+  if (!session) {
+    return { archived: false, snapshot: null };
+  }
+
+  const searchIndex = session.searches.findIndex(
+    (search) => String(search._id || "") === String(searchId || "")
+  );
+
+  if (searchIndex === -1) {
+    return { archived: false, snapshot: await getSessionSnapshot(sessionId) };
+  }
+
+  const searchToArchive = session.searches[searchIndex]?.toObject
+    ? session.searches[searchIndex].toObject()
+    : session.searches[searchIndex];
+
+  session.searches.splice(searchIndex, 1);
+  session.archivedSearches.push({
+    ...searchToArchive,
+    archivedAt: new Date(),
+  });
+
+  await session.save();
+
+  return {
+    archived: true,
+    snapshot: await getSessionSnapshot(sessionId),
+  };
 };

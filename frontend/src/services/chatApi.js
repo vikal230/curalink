@@ -44,3 +44,14 @@ export const fetchSessionSearches = async (sessionId) => {
     throw new Error(getErrorMessage(error, "Failed to load search history."));
   }
 };
+
+export const archiveSessionSearch = async (sessionId, searchId) => {
+  try {
+    const response = await apiClient.delete(
+      `/session/${encodeURIComponent(sessionId)}/searches/${encodeURIComponent(searchId)}`
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Failed to delete saved report."));
+  }
+};
