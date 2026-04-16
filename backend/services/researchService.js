@@ -44,12 +44,33 @@ const requestText = (url) => {
   });
 };
 
-const buildClinicalTrialsUrl = (query, status, pageToken = "") => {
-  const encodedQuery = encodeURIComponent(query);
-  const encodedStatus = encodeURIComponent(status);
-  const tokenPart = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
+const sanitizeTrialText = (value = "") => {
+  return toCleanString(value).replace(/[^a-z0-9\s-]/gi, " ");
+};
 
-  return `https://clinicaltrials.gov/api/v2/studies?query.cond=${encodedQuery}&filter.overallStatus=${encodedStatus}&pageSize=${CLINICAL_TRIAL_PAGE_SIZE}&format=json${tokenPart}`;
+const buildClinicalTrialsUrl = (candidate = {}, status = "", pageToken = "") => {
+  const params = new URLSearchParams();
+
+  if (candidate.condition) {
+    params.set("query.cond", candidate.condition);
+  }
+
+  if (candidate.term) {
+    params.set("query.term", candidate.term);
+  }
+
+  if (status) {
+    params.set("filter.overallStatus", status);
+  }
+
+  params.set("pageSize", String(CLINICAL_TRIAL_PAGE_SIZE));
+  params.set("format", "json");
+
+  if (pageToken) {
+    params.set("pageToken", pageToken);
+  }
+
+  return `https://clinicaltrials.gov/api/v2/studies?${params.toString()}`;
 };
 
 const buildOpenAlexUrl = (query, page = 1, sort = "relevance_score:desc") => {
@@ -156,15 +177,37 @@ const buildTrialQueries = ({ message, context, history, searchQuery }) => {
   const latestSearch = history
     .filter((item) => item?.role === "user")
     .slice(-1)[0]?.searchQuery;
+  const condition = sanitizeTrialText(disease || message || latestSearch || searchQuery);
+  const broadTerm = sanitizeTrialText(joinParts(intent, message));
+  const latestTerm = sanitizeTrialText(latestSearch);
+  const searchTerm = sanitizeTrialText(searchQuery);
 
-  return uniqueStrings([
-    disease,
-    joinParts(disease, intent),
-    joinParts(disease, message),
-    latestSearch,
-    searchQuery,
-    message,
-  ]).slice(0, 4);
+  return [
+    {
+      condition,
+      term: broadTerm,
+      label: "condition + intent",
+    },
+    {
+      condition,
+      term: latestTerm,
+      label: "condition + latest search",
+    },
+    {
+      condition,
+      term: searchTerm,
+      label: "condition + expanded query",
+    },
+    {
+      condition,
+      term: "",
+      label: "condition only",
+    },
+  ].filter((candidate, index, items) => {
+    const key = `${candidate.condition}::${candidate.term}`;
+    const isDuplicate = items.findIndex((item) => `${item.condition}::${item.term}` === key) !== index;
+    return candidate.condition && !isDuplicate;
+  });
 };
 
 const extractOpenAlexAbstract = (abstractIndex) => {
@@ -319,12 +362,39 @@ const withSourceFallback = async (sourceName, loader) => {
   }
 };
 
+const isBadClinicalTrialsRequest = (error) => {
+  return Number(error?.response?.status) === 400;
+};
+
+const tryClinicalTrialsRequest = async (candidate, status, pageToken = "") => {
+  const primaryUrl = buildClinicalTrialsUrl(candidate, status, pageToken);
+
+  try {
+    return await requestJson(primaryUrl);
+  } catch (error) {
+    const canRetrySimple =
+      isBadClinicalTrialsRequest(error) && candidate?.term;
+
+    if (!canRetrySimple) {
+      throw error;
+    }
+
+    const fallbackUrl = buildClinicalTrialsUrl(
+      { condition: candidate.condition, term: "" },
+      status,
+      pageToken
+    );
+
+    return requestJson(fallbackUrl);
+  }
+};
+
 const fetchClinicalTrials = async (queries) => {
   const allTrials = [];
   const queryList = Array.isArray(queries) ? queries : [queries];
 
-  for (const query of queryList) {
-    if (!query) {
+  for (const candidate of queryList) {
+    if (!candidate?.condition) {
       continue;
     }
 
@@ -332,14 +402,21 @@ const fetchClinicalTrials = async (queries) => {
       let pageToken = "";
 
       for (let pageIndex = 0; pageIndex < CLINICAL_TRIAL_MAX_PAGES; pageIndex += 1) {
-        const url = buildClinicalTrialsUrl(query, status, pageToken);
-        const response = await requestJson(url);
-        const studies = response.data?.studies || [];
+        try {
+          const response = await tryClinicalTrialsRequest(candidate, status, pageToken);
+          const studies = response.data?.studies || [];
 
-        allTrials.push(...studies.map(mapClinicalTrial));
+          allTrials.push(...studies.map(mapClinicalTrial));
 
-        pageToken = response.data?.nextPageToken || "";
-        if (!pageToken) {
+          pageToken = response.data?.nextPageToken || "";
+          if (!pageToken) {
+            break;
+          }
+        } catch (error) {
+          console.error(
+            `[ClinicalTrials.gov] request failed for ${candidate.label || candidate.condition} (${status})`,
+            error?.message || error
+          );
           break;
         }
       }
