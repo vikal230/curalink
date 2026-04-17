@@ -41,13 +41,13 @@ export const ReportPanel = ({
   };
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-[0_28px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-8">
+    <section className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-[0_28px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-8">
       <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
             Analysis Report
           </p>
-          <h2 className="mt-2 text-2xl font-bold text-white">{reportTitle}</h2>
+          <h2 className="mt-2 break-words text-2xl font-bold text-white">{reportTitle}</h2>
         </div>
 
         {isLoading ? (
@@ -71,7 +71,7 @@ export const ReportPanel = ({
               </div>
 
               {key === "overview" ? (
-                <p className="text-sm leading-7 text-slate-200">
+                <p className="break-words text-sm leading-7 text-slate-200">
                   {parsedAnswer.overview || "No overview available from the model yet."}
                 </p>
               ) : (
@@ -82,7 +82,7 @@ export const ReportPanel = ({
                         <span className="mt-1 text-xs font-semibold text-slate-500">
                           {formatSectionIndex(itemIndex)}
                         </span>
-                        <p className="text-sm leading-7 text-slate-300">{item}</p>
+                        <p className="break-words text-sm leading-7 text-slate-300">{item}</p>
                       </li>
                     ))
                   ) : (

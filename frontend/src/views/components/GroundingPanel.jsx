@@ -4,7 +4,7 @@ export const GroundingPanel = ({ citations }) => {
   }
 
   return (
-    <section className="rounded-[1.5rem] border border-cyan-300/12 bg-cyan-400/5 p-5">
+    <section className="overflow-hidden rounded-[1.5rem] border border-cyan-300/12 bg-cyan-400/5 p-5">
       <div className="mb-4">
         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
           Grounding
@@ -30,16 +30,16 @@ export const GroundingPanel = ({ citations }) => {
               ) : null}
             </div>
 
-            <h4 className="mt-3 text-sm font-semibold leading-6 text-slate-100">
+            <h4 className="mt-3 break-words text-sm font-semibold leading-6 text-slate-100">
               {citation.title}
             </h4>
 
             {citation.authors ? (
-              <p className="mt-2 text-sm text-slate-400">{citation.authors}</p>
+              <p className="mt-2 break-words text-sm text-slate-400">{citation.authors}</p>
             ) : null}
 
             {citation.snippet ? (
-              <p className="mt-3 text-sm leading-6 text-slate-300">{citation.snippet}</p>
+              <p className="mt-3 break-words text-sm leading-6 text-slate-300">{citation.snippet}</p>
             ) : null}
 
             {citation.url ? (

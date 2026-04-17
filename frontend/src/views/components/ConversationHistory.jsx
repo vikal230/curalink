@@ -3,7 +3,7 @@ import { buildContextSummary } from "../helpers/contextView";
 
 export const ConversationHistory = ({ history, sessionContext }) => {
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+    <section className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
       <div className="mb-5">
         <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
           Session Memory
@@ -15,7 +15,7 @@ export const ConversationHistory = ({ history, sessionContext }) => {
         <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
           Active context
         </p>
-        <p className="mt-3 text-sm leading-7 text-slate-300">
+        <p className="mt-3 break-words text-sm leading-7 text-slate-300">
           {buildContextSummary(sessionContext) || "No structured context saved yet."}
         </p>
       </div>
@@ -35,7 +35,7 @@ export const ConversationHistory = ({ history, sessionContext }) => {
                   {formatConversationTime(item.createdAt)}
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-slate-300">{item.content}</p>
+              <p className="mt-3 break-words text-sm leading-7 text-slate-300">{item.content}</p>
             </article>
           ))
         ) : (

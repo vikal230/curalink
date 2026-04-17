@@ -21,7 +21,7 @@ export const SavedContextCard = ({ context }) => {
             <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
               {field.label}
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-200">
+            <p className="mt-2 break-words text-sm leading-6 text-slate-200">
               {getDisplayValue(context?.[field.key])}
             </p>
           </article>

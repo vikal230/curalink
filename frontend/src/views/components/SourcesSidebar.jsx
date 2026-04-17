@@ -4,7 +4,7 @@ import { SavedContextCard } from "./SavedContextCard";
 
 export const SourcesSidebar = ({ history, sessionContext, papers, trials }) => {
   return (
-    <aside className="space-y-6">
+    <aside className="min-w-0 space-y-6">
       <SavedContextCard context={sessionContext} />
 
       <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
@@ -32,7 +32,7 @@ export const SourcesSidebar = ({ history, sessionContext, papers, trials }) => {
                     <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
                       {paper.source || "Publication"}
                     </p>
-                    <h4 className="mt-2 text-sm font-semibold leading-6 text-slate-100">
+                    <h4 className="mt-2 break-words text-sm font-semibold leading-6 text-slate-100">
                       {paper.title}
                     </h4>
                   </div>
@@ -44,11 +44,11 @@ export const SourcesSidebar = ({ history, sessionContext, papers, trials }) => {
                 </div>
 
                 {paper.authors ? (
-                  <p className="mt-3 text-sm text-slate-400">{paper.authors}</p>
+                  <p className="mt-3 break-words text-sm text-slate-400">{paper.authors}</p>
                 ) : null}
 
                 {getSourceSnippet(paper) ? (
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                  <p className="mt-3 break-words text-sm leading-6 text-slate-300">
                     {getSourceSnippet(paper)}
                   </p>
                 ) : null}
@@ -98,7 +98,7 @@ export const SourcesSidebar = ({ history, sessionContext, papers, trials }) => {
                     <p className="text-[11px] uppercase tracking-[0.24em] text-blue-200/70">
                       {trial.source || "Clinical trial"}
                     </p>
-                    <h4 className="mt-2 text-sm font-semibold leading-6 text-slate-100">
+                    <h4 className="mt-2 break-words text-sm font-semibold leading-6 text-slate-100">
                       {trial.title}
                     </h4>
                   </div>
@@ -110,17 +110,17 @@ export const SourcesSidebar = ({ history, sessionContext, papers, trials }) => {
                 </div>
 
                 {trial.location ? (
-                  <p className="mt-3 text-sm text-slate-300">{trial.location}</p>
+                  <p className="mt-3 break-words text-sm text-slate-300">{trial.location}</p>
                 ) : null}
 
                 {getSourceSnippet(trial) ? (
-                  <p className="mt-3 text-sm leading-6 text-slate-400">
+                  <p className="mt-3 break-words text-sm leading-6 text-slate-400">
                     {getSourceSnippet(trial)}
                   </p>
                 ) : null}
 
                 {trial.contact ? (
-                  <p className="mt-3 text-xs leading-6 text-slate-500">
+                  <p className="mt-3 break-words text-xs leading-6 text-slate-500">
                     Contact: {trial.contact}
                   </p>
                 ) : null}

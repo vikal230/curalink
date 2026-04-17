@@ -16,7 +16,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
+    <div className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-200">
       <div className="absolute inset-x-0 top-0 -z-10 h-[32rem] bg-[radial-gradient(circle_at_top,_rgba(6,182,212,0.18),_transparent_42%),radial-gradient(circle_at_top_right,_rgba(37,99,235,0.18),_transparent_32%)]" />
 
       <Header
@@ -25,7 +25,7 @@ const App = () => {
         sessionId={controller.sessionId}
       />
 
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 pb-8 pt-28 sm:px-6 lg:px-8 lg:pb-12 lg:pt-32">
         {activeView === "assistant" ? (
           <>
             <SearchSection

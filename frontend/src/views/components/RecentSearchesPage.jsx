@@ -14,7 +14,7 @@ const SearchChip = ({ isActive, onArchive, onClick, search }) => {
     <button
       type="button"
       onClick={onClick}
-      className={`w-[360px] min-h-[180px] shrink-0 rounded-[1.7rem] border p-5 text-left transition ${chipClasses}`}
+      className={`min-h-[180px] w-full rounded-[1.7rem] border p-5 text-left transition ${chipClasses}`}
     >
       <div className="flex items-start justify-between gap-3">
         <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Disease</p>
@@ -31,13 +31,13 @@ const SearchChip = ({ isActive, onArchive, onClick, search }) => {
           x
         </button>
       </div>
-      <p className="mt-2 text-lg font-semibold text-white">{diseaseLabel}</p>
+      <p className="mt-2 break-words text-lg font-semibold text-white">{diseaseLabel}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">
         Patient
       </p>
-      <p className="mt-2 text-sm text-slate-300">{patientLabel}</p>
+      <p className="mt-2 break-words text-sm text-slate-300">{patientLabel}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">Query</p>
-      <p className="mt-2 h-12 overflow-hidden text-sm leading-6 text-slate-400">
+      <p className="mt-2 h-12 overflow-hidden break-words text-sm leading-6 text-slate-400">
         {queryLabel}
       </p>
       <p className="mt-5 text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -73,7 +73,7 @@ export const RecentSearchesPage = ({
   }
 
   return (
-    <section className="space-y-8">
+    <section className="min-w-0 space-y-8">
       <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
         <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
           Recent Diseases
@@ -86,18 +86,16 @@ export const RecentSearchesPage = ({
           full report again.
         </p>
 
-        <div className="-mx-2 mt-6 overflow-x-auto px-2 pb-2 scrollbar-hidden">
-          <div className="flex min-w-max gap-3">
-            {recentSearches.map((search) => (
-              <SearchChip
-                key={search.id}
-                isActive={selectedSearchId === search.id}
-                onArchive={onArchiveSearch}
-                onClick={() => onSelectSearch(search)}
-                search={search}
-              />
-            ))}
-          </div>
+        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {recentSearches.map((search) => (
+            <SearchChip
+              key={search.id}
+              isActive={selectedSearchId === search.id}
+              onArchive={onArchiveSearch}
+              onClick={() => onSelectSearch(search)}
+              search={search}
+            />
+          ))}
         </div>
       </div>
 

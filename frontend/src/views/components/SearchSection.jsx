@@ -32,7 +32,7 @@ export const SearchSection = ({
   const sessionLabel = sessionId ? `${sessionId.slice(0, 12)}...` : "";
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-[0_28px_90px_rgba(2,6,23,0.45)] backdrop-blur-xl sm:p-8">
+    <section className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-[0_28px_90px_rgba(2,6,23,0.45)] backdrop-blur-xl sm:p-8">
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)]">
         <div className="space-y-6">
           <div className="space-y-4">
@@ -46,7 +46,7 @@ export const SearchSection = ({
                 context.
               </h1>
 
-              <p className="max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              <p className="max-w-2xl break-words text-sm leading-7 text-slate-300 sm:text-base">
                 Search across PubMed, OpenAlex, and ClinicalTrials.gov, then synthesize
                 the strongest signals into a cleaner report for hackathon demos and
                 follow-up conversations.
@@ -87,14 +87,14 @@ export const SearchSection = ({
                     <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
                       Current session
                     </p>
-                    <p className="mt-1 text-sm text-slate-300">
+                    <p className="mt-1 break-all text-sm text-slate-300">
                       {bootstrapping ? "Loading memory..." : sessionLabel}
                     </p>
                   </div>
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
                     Last query
                   </p>
-                  <p className="mt-1 text-sm text-slate-300">{lastQuery}</p>
+                  <p className="mt-1 break-words text-sm text-slate-300">{lastQuery}</p>
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -146,7 +146,7 @@ export const SearchSection = ({
             <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
               What this prototype does
             </p>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-300">
+            <ul className="mt-4 space-y-3 break-words text-sm leading-6 text-slate-300">
               <li>Expands vague user questions into stronger research queries.</li>
               <li>Stores disease, intent, and location in MongoDB-backed sessions.</li>
               <li>Blends publications and trials into a structured answer.</li>
@@ -157,7 +157,7 @@ export const SearchSection = ({
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-100/70">
               Session memory
             </p>
-            <p className="mt-4 text-sm leading-7 text-cyan-50">
+            <p className="mt-4 break-words text-sm leading-7 text-cyan-50">
               Follow-up prompts can now reuse stored disease context, so a second
               question like "Can I take Vitamin D?" still stays grounded.
             </p>
