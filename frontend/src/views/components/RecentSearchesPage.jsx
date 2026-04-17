@@ -86,7 +86,7 @@ export const RecentSearchesPage = ({
           full report again.
         </p>
 
-        <div className="-mx-2 mt-6 overflow-x-auto px-2 pb-2">
+        <div className="-mx-2 mt-6 overflow-x-auto px-2 pb-2 scrollbar-hidden">
           <div className="flex min-w-max gap-3">
             {recentSearches.map((search) => (
               <SearchChip
