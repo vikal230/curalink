@@ -7,7 +7,6 @@ import {
   formatCount,
   hydrateResponseDataFromSearch,
   parseAnswer,
-  readStoredSessionIds,
   rememberSessionId,
   sanitizeContextForm,
   sectionLabelMap,
@@ -51,6 +50,10 @@ const loadAllSearches = async (sessionIds = []) => {
   );
 
   return sortSearches(searchGroups.flat());
+};
+
+const removeSearchFromList = (searches = [], searchId = "") => {
+  return searches.filter((item) => item?.id !== searchId);
 };
 
 export const useResearchController = () => {
@@ -234,26 +237,51 @@ export const useResearchController = () => {
       return;
     }
 
+    const previousRecentSearches = recentSearches;
+    const previousSelectedSearchId = selectedSearchId;
+    const previousResponseData = responseData;
+    const previousLastQuery = lastQuery;
+    const previousHistory = history;
+    const previousContextForm = contextForm;
+    const nextSearches = removeSearchFromList(previousRecentSearches, search.id);
+    const isDeletingSelectedSearch = selectedSearchId === search.id;
+
+    setRecentSearches(nextSearches);
+
+    if (isDeletingSelectedSearch) {
+      const replacementSearch = nextSearches[0];
+
+      if (replacementSearch) {
+        setSelectedSearchId(replacementSearch.id || "");
+        setLastQuery(replacementSearch.query || INITIAL_LAST_QUERY);
+        setResponseData(hydrateResponseDataFromSearch(replacementSearch));
+        setContextForm(sanitizeContextForm(replacementSearch.context));
+        setError("");
+        void selectSearch(replacementSearch);
+      } else {
+        setSelectedSearchId("");
+        setResponseData(null);
+        setLastQuery(INITIAL_LAST_QUERY);
+        setHistory([]);
+        setContextForm(createEmptyContext());
+        setError("");
+      }
+    }
+
     try {
       const archiveData = await archiveSessionSearch(search.sessionId, search.id);
 
-      const searches = await loadAllSearches(readStoredSessionIds());
-      setRecentSearches(searches);
-
-      if (selectedSearchId === search.id) {
-        const nextSearch = searches[0];
-
-        if (nextSearch) {
-          await selectSearch(nextSearch);
-        } else {
-          setSelectedSearchId("");
-          setResponseData(null);
-          setLastQuery(INITIAL_LAST_QUERY);
-          setHistory(archiveData?.session?.messages || []);
-          setContextForm(sanitizeContextForm(archiveData?.session?.profile || {}));
-        }
+      if (isDeletingSelectedSearch && !nextSearches.length) {
+        setHistory(archiveData?.session?.messages || []);
+        setContextForm(sanitizeContextForm(archiveData?.session?.profile || {}));
       }
     } catch (archiveError) {
+      setRecentSearches(previousRecentSearches);
+      setSelectedSearchId(previousSelectedSearchId);
+      setResponseData(previousResponseData);
+      setLastQuery(previousLastQuery);
+      setHistory(previousHistory);
+      setContextForm(previousContextForm);
       setError(archiveError?.message || "Failed to delete saved report.");
     }
   };

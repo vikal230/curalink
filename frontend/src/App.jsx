@@ -10,9 +10,16 @@ import { StatsGrid } from "./views/components/StatsGrid";
 const App = () => {
   const controller = useResearchController();
   const [activeView, setActiveView] = useState("assistant");
-  const handleRecentSearchOpen = async (search) => {
-    await controller.selectSearch(search);
+  const hasAssistantResults = Boolean(
+    controller.responseData?.answer ||
+      controller.papers.length ||
+      controller.trials.length ||
+      controller.citations.length
+  );
+
+  const handleRecentSearchOpen = (search) => {
     setActiveView("assistant");
+    controller.selectSearch(search);
   };
 
   return (
@@ -25,7 +32,7 @@ const App = () => {
         sessionId={controller.sessionId}
       />
 
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 pb-8 pt-28 sm:px-6 lg:px-8 lg:pb-12 lg:pt-32">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 pb-8 pt-40 sm:px-6 md:pt-32 lg:px-8 lg:pb-12">
         {activeView === "assistant" ? (
           <>
             <SearchSection
@@ -45,25 +52,36 @@ const App = () => {
               sourceErrors={controller.sourceErrors}
             />
 
-            <StatsGrid stats={controller.stats} />
+            <div
+              aria-hidden={!hasAssistantResults}
+              className={`grid overflow-hidden transition-all duration-500 ease-out ${
+                hasAssistantResults
+                  ? "max-h-[400rem] translate-y-0 opacity-100"
+                  : "max-h-0 -translate-y-2 opacity-0 pointer-events-none"
+              }`}
+            >
+              <div className="space-y-8 pt-1">
+                <StatsGrid stats={controller.stats} />
 
-            <section className="grid gap-8 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
-              <ReportPanel
-                citations={controller.citations}
-                isLoading={controller.loading}
-                lastQuery={controller.lastQuery}
-                parsedAnswer={controller.parsedAnswer}
-                responseData={controller.responseData}
-                sectionLabelMap={controller.sectionLabelMap}
-              />
+                <section className="grid gap-8 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
+                  <ReportPanel
+                    citations={controller.citations}
+                    isLoading={controller.loading}
+                    lastQuery={controller.lastQuery}
+                    parsedAnswer={controller.parsedAnswer}
+                    responseData={controller.responseData}
+                    sectionLabelMap={controller.sectionLabelMap}
+                  />
 
-              <SourcesSidebar
-                history={controller.history}
-                sessionContext={controller.contextForm}
-                papers={controller.papers}
-                trials={controller.trials}
-              />
-            </section>
+                  <SourcesSidebar
+                    history={controller.history}
+                    sessionContext={controller.contextForm}
+                    papers={controller.papers}
+                    trials={controller.trials}
+                  />
+                </section>
+              </div>
+            </div>
           </>
         ) : (
           <RecentSearchesPage

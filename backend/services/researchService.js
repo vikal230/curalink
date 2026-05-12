@@ -2,7 +2,7 @@ import axios from "axios";
 import { buildSearchQuery, rankPapers, rankTrials } from "../utils/relevance.js";
 import { cleanText, shortText } from "../utils/textUtils.js";
 
-const REQUEST_TIMEOUT = 15000;
+const REQUEST_TIMEOUT = 25000;
 const CLINICAL_TRIAL_PAGE_SIZE = 50;
 const CLINICAL_TRIAL_MAX_PAGES = 2;
 const OPEN_ALEX_PAGE_SIZE = 30;
@@ -151,6 +151,20 @@ const uniqueStrings = (values = []) => {
 
 const joinParts = (...values) => {
   return uniqueStrings(values).join(" ");
+};
+
+const simplifyPubMedQuery = (query = "") => {
+  return toCleanString(query)
+    .replace(/\b(latest|recent|new|newest|current|top)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const buildPubMedQueryList = (queries = []) => {
+  const originals = Array.isArray(queries) ? queries : [queries];
+  const simplified = originals.map(simplifyPubMedQuery);
+
+  return uniqueStrings([...originals, ...simplified]).slice(0, PUBMED_QUERY_LIMIT + 2);
 };
 
 const buildPublicationQueries = ({ message, context, history, searchQuery }) => {
@@ -454,8 +468,10 @@ const fetchOpenAlex = async (queries) => {
 };
 
 const fetchPubMed = async (queries) => {
-  const queryList = (Array.isArray(queries) ? queries : [queries]).slice(0, PUBMED_QUERY_LIMIT);
+  const queryList = buildPubMedQueryList(queries);
   const allIds = [];
+  const searchErrors = [];
+  let hasSuccessfulSearch = false;
 
   for (const query of queryList) {
     if (!query) {
@@ -468,17 +484,24 @@ const fetchPubMed = async (queries) => {
       const ids = searchResponse.data?.esearchresult?.idlist || [];
 
       allIds.push(...ids);
+      hasSuccessfulSearch = true;
     } catch (error) {
+      searchErrors.push(error);
       console.error(`[PubMed] search query failed: ${query}`, error?.message || error);
     }
   }
 
   const ids = uniqueStrings(allIds).slice(0, PUBMED_LIMIT);
   if (!ids.length) {
+    if (searchErrors.length && !hasSuccessfulSearch) {
+      throw searchErrors[0];
+    }
+
     return [];
   }
 
   const papers = [];
+  const fetchErrors = [];
 
   for (let index = 0; index < ids.length; index += PUBMED_BATCH_SIZE) {
     const batchIds = ids.slice(index, index + PUBMED_BATCH_SIZE);
@@ -488,11 +511,16 @@ const fetchPubMed = async (queries) => {
       const fetchResponse = await requestText(fetchUrl);
       papers.push(...parsePubMedArticles(fetchResponse.data || "", batchIds));
     } catch (error) {
+      fetchErrors.push(error);
       console.error(
         `[PubMed] fetch batch failed: ${batchIds.join(",")}`,
         error?.message || error
       );
     }
+  }
+
+  if (!papers.length && fetchErrors.length) {
+    throw fetchErrors[0];
   }
 
   return dedupePapers(papers);
